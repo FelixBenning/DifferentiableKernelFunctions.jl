@@ -1,6 +1,6 @@
 module DifferentiableKernelFunctions
 
-include("lazyProduct.jl")
+include("multiOutput.jl")
 include("diffKernel.jl")
 
 end
