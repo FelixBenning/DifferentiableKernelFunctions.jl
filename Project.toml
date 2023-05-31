@@ -4,8 +4,10 @@ authors = ["Felix Benning <felix.benning@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 KernelFunctions = "ec8451be-7e33-11e9-00cf-bbf324bd1392"
 LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MappedArrays = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
 
 [compat]

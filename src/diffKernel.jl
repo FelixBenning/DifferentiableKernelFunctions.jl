@@ -1,5 +1,6 @@
 import ForwardDiff as FD
 import LinearAlgebra as LA
+using KernelFunctions: SimpleKernel, Kernel
 
 """ 
 	DiffPt(x; partial=())
@@ -32,43 +33,6 @@ function DiffPt(x::T, partials::NTuple{Order,KeyT}) where {T,Order,KeyT}
     return DiffPt{Order,KeyT,T}(x, partials)
 end
 
-"""
-    tangentCurve(x₀, i::IndexType)
-returns the function (t ↦ x₀ + teᵢ) where eᵢ is the unit vector at index i
-"""
-function tangentCurve(x0::AbstractArray, idx::IndexType)
-    return t -> begin
-        x = similar(x0, promote_type(eltype(x0), typeof(t)))
-        copyto!(x, x0)
-        x[idx] += t
-        return x
-    end
-end
-function tangentCurve(x0::Number, ::IndexType)
-    return t -> x0 + t
-end
-
-partial(func) = func
-function partial(func, idx::IndexType)
-    return x -> FD.derivative(func ∘ tangentCurve(x, idx), 0)
-end
-function partial(func, partials::IndexType...)
-    idx, state = iterate(partials)
-    return partial(
-        x -> FD.derivative(func ∘ tangentCurve(x, idx), 0), Base.rest(partials, state)...
-    )
-end
-
-"""
-Take the partial derivative of a function with two dim-dimensional inputs,
-i.e. 2*dim dimensional input
-"""
-function partial(
-    k, partials_x::Tuple{Vararg{T}}, partials_y::Tuple{Vararg{T}}
-) where {T<:IndexType}
-    local f(x, y) = partial(t -> k(t, y), partials_x...)(x)
-    return (x, y) -> partial(t -> f(x, t), partials_y...)(y)
-end
 
 """
 	_evaluate(k::T, x::DiffPt{Dim}, y::DiffPt{Dim}) where {Dim, T<:Kernel}

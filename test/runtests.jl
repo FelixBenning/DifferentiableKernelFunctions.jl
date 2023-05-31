@@ -1,10 +1,27 @@
-import KernelFunctions as KF
-using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF
+using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel 
+using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, DiffPt, partial
 using Test
 
-@testset "DifferentiableKernelFunctions.jl" begin
-    @testset "custom product identical to Base.product" begin
-        @test DKF.product(1:3, 4:10) == collect(Base.product(1:3, 4:10))
+const AVAILABLE_TESTS = [
+    "multiOutput",
+    "diffKernel",
+]
+
+function test_selection()
+    group_str = get(ENV, "GROUP", missing)
+    if ismissing(group_str)
+        return AVAILABLE_TESTS
+    else
+        groups = split(group_str, ",")
+        surprises = setdiff(groups, AVAILABLE_TESTS)
+        isempty(surprises) || throw(ArgumentError("Test groups $surprises not available"))
+        return groups 
     end
 end
 
+
+@testset "DifferentiableKernelFunctions.jl" begin
+    for test in test_selection()
+        include("$(test).jl")
+    end
+end
