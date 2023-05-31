@@ -44,7 +44,7 @@ unboxes the partial instructions from DiffPt and applies them to k,
 evaluates them at the positions of DiffPt
 """
 function _evaluate(k::T, (x,px)::DiffPt, (y,py)::DiffPt) where {T<:Kernel}
-    return partial(k, px.indices, py.indices)(x, y)
+    return apply_partial(k, px.indices, py.indices)(x, y)
 end
 
 #=

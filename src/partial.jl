@@ -4,6 +4,7 @@ struct Partial{Order,T<:IndexType}
     indices::NTuple{Order,T}
 end
 
+# TODO: this is not ideal... how does NTuple{0,Int} <: Tuple{} work??
 Partial() = Partial{0,Int}(())
 function Partial(indices::Integer...)
     return Partial{length(indices),Int}(indices)
@@ -11,9 +12,7 @@ end
 function Partial(indices::Base.AbstractCartesianIndex...)
     return Partial{length(indices),Base.AbstractCartesianIndex}(indices)
 end
-struct Gradient
-    input_shape
-end
+partial(indices...) = Partial(indices...)
 
 ## show helpers
 
@@ -55,6 +54,10 @@ end
 
 const DiffPt{T} = Tuple{T,Partial}
 
+gradient(dim::Integer) = mappedarray(partial, Base.OneTo(dim))
+hessian(dim::Integer) = mappedarray(partial, lazy_product(Base.OneTo(dim), Base.OneTo(dim)))
+fullderivative(order::Integer,dim::Integer) = mappedarray(partial, lazy_product(ntuple(_->Base.OneTo(dim), order)...))
+
 """
     tangentCurve(x₀, i::IndexType)
 returns the function (t ↦ x₀ + teᵢ) where eᵢ is the unit vector at index i
@@ -71,13 +74,13 @@ function tangentCurve(x0::Number, ::IndexType)
     return t -> x0 + t
 end
 
-partial(func) = func
-function partial(func, idx::IndexType)
+apply_partial(func) = func
+function apply_partial(func, idx::IndexType)
     return x -> FD.derivative(func ∘ tangentCurve(x, idx), 0)
 end
-function partial(func, partials::IndexType...)
+function apply_partial(func, partials::IndexType...)
     idx, state = iterate(partials)
-    return partial(
+    return apply_partial(
         x -> FD.derivative(func ∘ tangentCurve(x, idx), 0), Base.rest(partials, state)...
     )
 end
@@ -86,9 +89,9 @@ end
 Take the partial derivative of a function with two dim-dimensional inputs,
 i.e. 2*dim dimensional input
 """
-function partial(
+function apply_partial(
     k, partials_x::Tuple{Vararg{T}}, partials_y::Tuple{Vararg{T}}
 ) where {T<:IndexType}
-    local f(x, y) = partial(t -> k(t, y), partials_x...)(x)
-    return (x, y) -> partial(t -> f(x, t), partials_y...)(y)
+    local f(x, y) = apply_partial(t -> k(t, y), partials_x...)(x)
+    return (x, y) -> apply_partial(t -> f(x, t), partials_y...)(y)
 end

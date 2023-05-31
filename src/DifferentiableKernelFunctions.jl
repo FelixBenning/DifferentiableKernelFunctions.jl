@@ -1,6 +1,6 @@
 module DifferentiableKernelFunctions
 
-export Partial
+export partial
 
 include("multiOutput.jl")
 include("partial.jl")
