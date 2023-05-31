@@ -1,15 +1,24 @@
-const IndexType = Int # Union{Int,Base.AbstractCartesianIndex}
+const IndexType = Union{Int,Base.AbstractCartesianIndex}
 
-struct Partial{Order}
-    indices::NTuple{Order,IndexType}
+struct Partial{Order,T<:IndexType}
+    indices::NTuple{Order,T}
 end
 
+Partial() = Partial{0,Int}(())
 function Partial(indices::Integer...)
-    return Partial{length(indices)}(indices)
+    return Partial{length(indices),Int}(indices)
 end
-
+function Partial(indices::Base.AbstractCartesianIndex...)
+    return Partial{length(indices),Base.AbstractCartesianIndex}(indices)
+end
+struct Gradient
+    input_shape
+end
 
 ## show helpers
+
+lower_digits(n::Integer) = join(reverse(digits(n)) .+ '₀')
+lower_digits(idx::Base.AbstractCartesianIndex) = join(map(lower_digits, Tuple(idx)), ",")
 
 ### Fallbacks
 compact_representation(p::Partial) = compact_representation(MIME"text/plain"(), p)
@@ -20,11 +29,9 @@ detailed_representation(p::Partial{0}) = """: Partial() a zero order derivative"
 ### text/plain
 compact_representation(::MIME"text/plain", ::Partial{0}) = "id"
 function compact_representation(::MIME"text/plain", p::Partial)
-    tuple = Tuple(p.indices)
-    lower_numbers = @. (n -> '₀' + n)(reverse(digits(tuple)))
-    return join(["∂$(join(x))" for x in lower_numbers])
+    lower_numbers = map(lower_digits, p.indices)
+    return join(["∂$(x)" for x in lower_numbers])
 end
-
 
 ### text/html
 compact_representation(::MIME"text/html", ::Partial{0}) = """<span class="text-muted" title="a zero order derivative">id</span>"""
@@ -46,7 +53,7 @@ for T in [MIME"text/plain", MIME"text/html"]
     end
 end
 
-const DiffPt{T} = Tuple{T, Partial}
+const DiffPt{T} = Tuple{T,Partial}
 
 """
     tangentCurve(x₀, i::IndexType)
