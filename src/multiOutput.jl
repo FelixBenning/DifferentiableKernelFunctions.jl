@@ -1,5 +1,5 @@
 
-using MappedArrays: mappedarray
+using MappedArrays: mappedarray, ReadonlyMappedArray
 
 function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
     linear_indexed = ntuple(

@@ -58,6 +58,12 @@ gradient(dim::Integer) = mappedarray(partial, Base.OneTo(dim))
 hessian(dim::Integer) = mappedarray(partial, lazy_product(Base.OneTo(dim), Base.OneTo(dim)))
 fullderivative(order::Integer,dim::Integer) = mappedarray(partial, lazy_product(ntuple(_->Base.OneTo(dim), order)...))
 
+# idea: lazy mappings can be undone (extract original range -> towards a specialization speedup of broadcasting over multiple derivatives using backwardsdiff)
+const MappedPartialVec{T} = ReadonlyMappedArray{Partial{1,Int},1,T,typeof(partial)}
+function extract_range(p_map::MappedPartialVec{T}) where {T<:AbstractUnitRange{Int}}
+    return p_map.data::T
+end
+
 """
     tangentCurve(x₀, i::IndexType)
 returns the function (t ↦ x₀ + teᵢ) where eᵢ is the unit vector at index i
