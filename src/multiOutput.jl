@@ -3,12 +3,16 @@ using MappedArrays: mappedarray
 
 function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
     linear_indexed = ntuple(
-        n -> hasmethod(Base.getindex, (fieldtype(T, n), Int)),
+        n -> Base.IndexStyle(fieldtype(T,n)) === IndexLinear(),
         Base._counttuple(T)
     )
     all(linear_indexed) || throw(ArgumentError(
         "$(vecs[findfirst(x->!x, linear_indexed)]) cannot be linearly accessed. All inputs need to implement `Base.getindex(::T, ::Int)`"
     ))
+end
+
+struct ProductArray
+    arrays
 end
 
 """

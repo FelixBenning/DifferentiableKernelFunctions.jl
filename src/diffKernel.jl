@@ -19,19 +19,18 @@ for higher order derivatives partial can be any iterable, i.e.
 ```
 """
 
-IndexType = Union{Int,Base.AbstractCartesianIndex}
 
-struct DiffPt{Order,KeyT<:IndexType,T}
-    pos::T # the actual position
-    partials::NTuple{Order,KeyT}
-end
+# struct DiffPt{Order,KeyT<:IndexType,T}
+#     pos::T # the actual position
+#     partials::NTuple{Order,KeyT}
+# end
 
-DiffPt(x::T) where {T<:AbstractArray} = DiffPt{0,keytype(T),T}(x, ()::NTuple{0,keytype(T)})
-DiffPt(x::T) where {T<:Number} = DiffPt{0,Int,T}(x, ()::NTuple{0,Int})
-DiffPt(x::T, partial::IndexType) where {T} = DiffPt{1,IndexType,T}(x, (partial,))
-function DiffPt(x::T, partials::NTuple{Order,KeyT}) where {T,Order,KeyT}
-    return DiffPt{Order,KeyT,T}(x, partials)
-end
+# DiffPt(x::T) where {T<:AbstractArray} = DiffPt{0,keytype(T),T}(x, ()::NTuple{0,keytype(T)})
+# DiffPt(x::T) where {T<:Number} = DiffPt{0,Int,T}(x, ()::NTuple{0,Int})
+# DiffPt(x::T, partial::IndexType) where {T} = DiffPt{1,IndexType,T}(x, (partial,))
+# function DiffPt(x::T, partials::NTuple{Order,KeyT}) where {T,Order,KeyT}
+#     return DiffPt{Order,KeyT,T}(x, partials)
+# end
 
 
 """
@@ -44,8 +43,8 @@ redirection over `_evaluate` is necessary
 unboxes the partial instructions from DiffPt and applies them to k,
 evaluates them at the positions of DiffPt
 """
-function _evaluate(k::T, x::DiffPt, y::DiffPt) where {T<:Kernel}
-    return partial(k, x.partials, y.partials)(x.pos, y.pos)
+function _evaluate(k::T, (x,px)::DiffPt, (y,py)::DiffPt) where {T<:Kernel}
+    return partial(k, px.indices, py.indices)(x, y)
 end
 
 #=
@@ -60,6 +59,6 @@ then julia would not know whether to use
 =#
 for T in [SimpleKernel, Kernel] #subtypes(Kernel)
     (k::T)(x::DiffPt, y::DiffPt) = _evaluate(k, x, y)
-    (k::T)(x::DiffPt, y) = _evaluate(k, x, DiffPt(y))
-    (k::T)(x, y::DiffPt) = _evaluate(k, DiffPt(x), y)
+    (k::T)(x::DiffPt, y) = _evaluate(k, x,(y, Partial()))
+    (k::T)(x, y::DiffPt) = _evaluate(k, (x, Partial()), y)
 end

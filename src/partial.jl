@@ -1,10 +1,14 @@
+const IndexType = Int # Union{Int,Base.AbstractCartesianIndex}
+
 struct Partial{Order}
-    indices::NTuple{Order,Int}
+    indices::NTuple{Order,IndexType}
 end
 
 function Partial(indices::Integer...)
-    return Partial{length(indices)}(sort(indices))
+    return Partial{length(indices)}(indices)
 end
+
+const DiffPt{T} = Tuple{T, Partial}
 
 compact_string_representation(::Partial{0}) = print(io, "id")
 function compact_string_representation(p::Partial)
