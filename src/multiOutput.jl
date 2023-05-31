@@ -12,11 +12,11 @@ function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
 end
 
 """
-    product(vectors...)
+    lazy_product(vectors...)
 
 The output is a lazy form of
 ```julia
-    collect(Iterators.product(vectors...))
+collect(Iterators.product(vectors...))
 ```
 i.e. it is an AbstractArray in contrast to `Iterators.product(vectors...)`. So
 is accessible with `getindex` and gets default Array implementations for free.
@@ -32,11 +32,11 @@ function lazy_product(vectors...)
 end
 
 """
-    product(vectors...)
+    lazy_flatten(vectors...)
 
 The output is a lazy form of
 ```julia
-    collect(Iterators.flatten(vectors...))
+collect(Iterators.flatten(vectors...))
 ```
 i.e. it is an AbstractArray in contrast to `Iterators.flatten(vectors...)`. So
 is accessible with `getindex` and gets default Array implementations for free.
