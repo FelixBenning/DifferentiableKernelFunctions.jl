@@ -8,32 +8,45 @@ function Partial(indices::Integer...)
     return Partial{length(indices)}(indices)
 end
 
-const DiffPt{T} = Tuple{T, Partial}
 
-compact_string_representation(::Partial{0}) = print(io, "id")
-function compact_string_representation(p::Partial)
+## show helpers
+
+### Fallbacks
+compact_representation(p::Partial) = compact_representation(MIME"text/plain"(), p)
+compact_representation(::MIME, p::Partial) = compact_representation(p)
+detailed_representation(p::Partial) = """: Partial($(join(p.indices,",")))"""
+detailed_representation(p::Partial{0}) = """: Partial() a zero order derivative"""
+
+### text/plain
+compact_representation(::MIME"text/plain", ::Partial{0}) = "id"
+function compact_representation(::MIME"text/plain", p::Partial)
     tuple = Tuple(p.indices)
     lower_numbers = @. (n -> '₀' + n)(reverse(digits(tuple)))
     return join(["∂$(join(x))" for x in lower_numbers])
 end
 
-function Base.show(io::IO, ::MIME"text/plain", p::Partial)
-    if get(io, :compact, false)
-        print(io, "Partial($(Tuple(p.indices)))")
-    else
-        print(io, compact_string_representation(p))
+
+### text/html
+compact_representation(::MIME"text/html", ::Partial{0}) = """<span class="text-muted" title="a zero order derivative">id</span>"""
+function compact_representation(::MIME"text/html", p::Partial)
+    return join(map(n -> "∂<sub>$(n)</sub>", Tuple(p.indices)), "")
+end
+
+### show
+
+function Base.show(io::IO, p::Partial)
+    print(io, compact_representation(p))
+end
+
+for T in [MIME"text/plain", MIME"text/html"]
+    function Base.show(io::IO, mime::T, p::Partial)
+        print(io, compact_representation(mime, p))
+        get(io, :compact, false) && return
+        print(io, detailed_representation(p))
     end
 end
 
-function Base.show(io::IO, ::MIME"text/html", p::Partial)
-    tuple = Tuple(p.indices)
-    if get(io, :compact, false)
-        print(io, join(map(n -> "∂<sub>$(n)</sub>", tuple), ""))
-    else
-        print(io, compact_string_representation(p))
-    end
-end
-
+const DiffPt{T} = Tuple{T, Partial}
 
 """
     tangentCurve(x₀, i::IndexType)
