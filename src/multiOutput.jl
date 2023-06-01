@@ -26,28 +26,24 @@ function Base.IteratorSize(::Type{ProductArray{T,N, Eltype}}) where {T,N,Eltype}
 end
 Base.size(p::ProductArray) = size(p.prodIt)
 Base.axes(p::ProductArray) = axes(p.prodIt)
-Base.axes(p::ProductArray, idx::Integer) = axes(p)[idx]
-Base.ndims(p::ProductArray) = ndims(p.prodIt)
+Base.ndims(::ProductArray{T,N}) where {T,N} = N
 Base.length(p::ProductArray) = length(p.prodIt)
-function Base.IteratorEltype(::Type{ProductArray{T,N,Eltype}}) where {T,N,Eltype}
+function Base.IteratorEltype(::Type{<:ProductArray{T}}) where {T}
     Base.IteratorEltype(Iterators.ProductIterator{T})
 end 
-function Base.eltype(::Type{ProductArray{T,N,Eltype}}) where {T,N,Eltype}
-    eltype(Iterators.ProductIterator{T})
-end
+Base.eltype(::Type{ProductArray{T,N,Eltype}}) where {T,N,Eltype} = Eltype
 Base.iterate(p::ProductArray) = iterate(p.prodIt)
 Base.iterate(p::ProductArray, state) = iterate(p.prodIt, state)
 
-Base.reverse(p::ProductArray) = ProductArray(reverse(p.prodIt))
 Base.last(p::ProductArray) = last(p.prodIt)
 
 # implement private _getindex for ProductIterator
 
-function _getindex(prod::Iterators.ProductIterator, indices...)
+function _getindex(prod::Iterators.ProductIterator, indices::Int...)
     return _prod_getindex(prod.iterators, indices...)
 end
 _prod_getindex(::Tuple{}) = ()
-function _prod_getindex(p_vecs::Tuple, indices...)
+function _prod_getindex(p_vecs::Tuple, indices::Int...)
     v = first(p_vecs)
     n = ndims(v)
     return (
@@ -57,7 +53,7 @@ function _prod_getindex(p_vecs::Tuple, indices...)
 end
 
 # apply this to ProductArray
-Base.getindex(p::ProductArray, indices...) = _getindex(p.prodIt, indices...)
+Base.getindex(p::ProductArray{T,N}, indices::Vararg{Int,N}) where {T,N} = _getindex(p.prodIt, indices...)
 
 """
     lazy_product(vectors...)
