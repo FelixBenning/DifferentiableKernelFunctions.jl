@@ -1,5 +1,9 @@
 module DifferentiableKernelFunctions
 
+using Reexport
+
+@reexport using KernelFunctions
+
 export partial
 
 include("multiOutput.jl")
