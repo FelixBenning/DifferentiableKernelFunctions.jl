@@ -3,7 +3,7 @@ using MappedArrays: mappedarray, ReadonlyMappedArray
 
 function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
     linear_indexed = ntuple(
-        n -> Base.IndexStyle(fieldtype(T,n)) === IndexLinear(),
+        n -> hasmethod(Base.getindex, (fieldtype(T, n), Int)),
         Base._counttuple(T)
     )
     all(linear_indexed) || throw(ArgumentError(
@@ -11,9 +11,46 @@ function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
     ))
 end
 
-struct ProductArray
-    arrays
+struct ProductArray{T<:Tuple,N,Eltype} <: AbstractArray{N,Eltype}
+    prodIt::Iterators.ProductIterator{T}
+    ProductArray(t::T) where T = begin
+        ensure_all_linear_indexed(t)
+        prodIt = Iterators.ProductIterator(t)
+        new{T,ndims(prodIt),eltype(Iterators.ProductIterator{T})}(prodIt)
+    end
 end
+
+# wrap ProductIterator
+Base.IteratorSize(::Type{ProductArray{T}}) where {T} = Base.IteratorSize(Iterators.ProductIterator{T})
+Base.size(p::ProductArray) = size(p.prodIt)
+Base.axes(p::ProductArray) = axes(p.prodIt)
+Base.ndims(p::ProductArray) = ndims(p.prodIt)
+Base.length(p::ProductArray) = length(p.prodIt)
+Base.IteratorEltype(::Type{ProductArray{T}}) where {T} = Base.IteratorEltype(Iterators.ProductIterator{T})
+Base.eltype(::Type{ProductArray{T}}) where {T} = eltype(Iterators.ProductIterator{T})
+Base.iterate(p::ProductArray) = iterate(p.prodIt)
+Base.iterate(p::ProductArray, state) = iterate(p.prodIt, state)
+
+Base.reverse(p::ProductArray) = ProductArray(reverse(p.prodIt))
+Base.last(p::ProductArray) = last(p.prodIt)
+
+# implement private _getindex for ProductIterator
+
+function _getindex(prod::Iterators.ProductIterator, indices...)
+    return _prod_getindex(prod.iterators, indices...)
+end
+_prod_getindex(::Tuple{}) = ()
+function _prod_getindex(p_vecs::Tuple, indices...)
+    v = first(p_vecs)
+    n = ndim(v)
+    return (
+        v[indices[1:n]...],
+        _prod_getindex(Base.tail(p_vecs), indices[n+1:end]...)...
+    )
+end
+
+# apply this to ProductArray
+Base.getindex(p::ProductArray, indices...) = _getindex(p.prodIt, indices...)
 
 """
     lazy_product(vectors...)
@@ -27,13 +64,7 @@ is accessible with `getindex` and gets default Array implementations for free.
 In particular it can be passed to `Base.PermutedDimsArray`` for lazy permutation
 and `vec()` to obtain a lazy `Base.ReshapedArray`.
 """
-function lazy_product(vectors...)
-    ensure_all_linear_indexed(vectors)
-    indices = CartesianIndices(ntuple(n -> axes(vec(vectors[n]), 1), length(vectors)))
-    return mappedarray(indices) do idx
-        return ntuple(n -> vec(vectors[n])[idx[n]], length(vectors))
-    end
-end
+lazy_product(vectors...) = ProductArray(vectors)
 
 """
     lazy_flatten(vectors...)
@@ -49,11 +80,11 @@ and `vec()` to obtain a lazy `Base.ReshapedArray`.
 """
 function lazy_flatten(vectors...)
     ensure_all_linear_indexed(vectors)
-    lengths = cumsum(length.(vectors)) 
+    lengths = cumsum(length.(vectors))
     return mappedarray(1:lengths[end]) do idx
         # this is not efficient for iteration - maybe go with LazyArrays.jl -> Vcat instead.
         v_idx = searchsortedfirst(lengths, idx)
-        return vectors[v_idx][idx - get(lengths, v_idx-1, 0)]
+        return vectors[v_idx][idx-get(lengths, v_idx - 1, 0)]
     end
 end
 
