@@ -11,27 +11,27 @@ function ensure_all_linear_indexed(vecs::T) where {T<:Tuple}
     ))
 end
 
-struct ProductArray{T<:Tuple,N,Eltype} <: AbstractArray{Eltype,N}
+struct ProductArray{T<:Tuple,Eltype,N} <: AbstractArray{Eltype,N}
     prodIt::Iterators.ProductIterator{T}
     ProductArray(t::T) where T = begin
         ensure_all_linear_indexed(t)
         prodIt = Iterators.ProductIterator(t)
-        new{T,ndims(prodIt),eltype(Iterators.ProductIterator{T})}(prodIt)
+        new{T,eltype(Iterators.ProductIterator{T}),ndims(prodIt)}(prodIt)
     end
 end
 
 # wrap ProductIterator
-function Base.IteratorSize(::Type{ProductArray{T,N, Eltype}}) where {T,N,Eltype}
+function Base.IteratorSize(::Type{ProductArray{T,Eltype,N}}) where {T,Eltype,N}
     Base.IteratorSize(Iterators.ProductIterator{T})
 end
 Base.size(p::ProductArray) = size(p.prodIt)
 Base.axes(p::ProductArray) = axes(p.prodIt)
-Base.ndims(::ProductArray{T,N}) where {T,N} = N
+Base.ndims(::ProductArray{T,Eltype,N}) where {T,Eltype,N} = N
 Base.length(p::ProductArray) = length(p.prodIt)
 function Base.IteratorEltype(::Type{<:ProductArray{T}}) where {T}
     Base.IteratorEltype(Iterators.ProductIterator{T})
 end 
-Base.eltype(::Type{ProductArray{T,N,Eltype}}) where {T,N,Eltype} = Eltype
+Base.eltype(::Type{ProductArray{T,Eltype,N}}) where {T,Eltype,N} = Eltype
 Base.iterate(p::ProductArray) = iterate(p.prodIt)
 Base.iterate(p::ProductArray, state) = iterate(p.prodIt, state)
 
@@ -53,7 +53,7 @@ function _prod_getindex(p_vecs::Tuple, indices::Int...)
 end
 
 # apply this to ProductArray
-Base.getindex(p::ProductArray{T,N}, indices::Vararg{Int,N}) where {T,N} = _getindex(p.prodIt, indices...)
+Base.getindex(p::ProductArray{T,Eltype,N}, indices::Vararg{Int,N}) where {T,Eltype,N} = _getindex(p.prodIt, indices...)
 
 """
     lazy_product(vectors...)
