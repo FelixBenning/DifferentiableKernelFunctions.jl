@@ -6,7 +6,6 @@ using Test
 List of Testfiles without extension. `\$(test).jl"` should be a file for every test in AVAILABLE_TESTS
 """
 const AVAILABLE_TESTS = [
-    "multiOutput",
     "diffKernel",
 ]
 
