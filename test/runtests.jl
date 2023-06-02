@@ -1,4 +1,4 @@
-using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel 
+using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel
 using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, DiffPt, partial, Partial
 using Test
 
