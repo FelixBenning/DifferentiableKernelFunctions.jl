@@ -54,9 +54,19 @@ end
 
 const DiffPt{T} = Tuple{T,Partial}
 
-gradient(dim::Integer) = mappedarray(partial, Base.OneTo(dim))
-hessian(dim::Integer) = mappedarray(partial, productArray(Base.OneTo(dim), Base.OneTo(dim)))
-fullderivative(order::Integer, dim::Integer) = mappedarray(partial, productArray(ntuple(_ -> Base.OneTo(dim), order)...))
+function fullderivative(::Val{order}, input_indices::AbstractVector{Int}) where {order}
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())))
+end
+fullderivative(::Val{order}, dim::Integer) where {order} = fullderivative(Val{order}(), Base.OnTo(dim))
+function fullderivative(::Val{order}, input_indices::AbstractArray{T,N}) where {order,N,T<:Base.AbstractCartesianIndex{N}}
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())))
+end
+
+gradient(input_indices::AbstractArray) = fullderivative(Val(1), input_indices)
+gradient(dim::Integer) = fullderivative(Val(1), dim)
+
+hessian(input_indices::AbstractArray) = fullderivative(Val(2), input_indices)
+hessian(dim::Integer) = fullderivative(Val(2), dim)
 
 # idea: lazy mappings can be undone (extract original range -> towards a specialization speedup of broadcasting over multiple derivatives using backwardsdiff)
 const MappedPartialVec{T} = ReadonlyMappedArray{Partial{1,Tuple{Int}},1,T,typeof(partial)}
