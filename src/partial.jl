@@ -19,8 +19,8 @@ lower_digits(idx::Base.AbstractCartesianIndex) = join(map(lower_digits, Tuple(id
 ### Fallbacks
 compact_representation(p::Partial) = compact_representation(MIME"text/plain"(), p)
 compact_representation(::MIME, p::Partial) = compact_representation(p)
-detailed_representation(p::Partial) = """: Partial($(join(p.indices,",")))"""
-detailed_representation(p::Partial{0,Tuple{}}) = """: Partial() a zero order derivative"""
+detailed_representation(p::Partial) = """: partial($(join(p.indices,",")))"""
+detailed_representation(p::Partial{0,Tuple{}}) = """: partial() a zero order derivative"""
 
 ### text/plain
 compact_representation(::MIME"text/plain", ::Partial{0,Tuple{}}) = "id"
