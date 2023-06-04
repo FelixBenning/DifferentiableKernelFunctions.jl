@@ -8,10 +8,6 @@ function Partial(indices::Tuple{Vararg{T}}) where {T<:IndexType}
     Ord = length(indices)
     return Partial{Ord,NTuple{Ord,T}}(indices)
 end
-# function Partial(indices::Base.AbstractCartesianIndex...)
-#     N = length(indices)
-#     return Partial{N,NTuple{N,Base.AbstractCartesianIndex}}(indices)
-# end
 partial(indices::Tuple{Vararg{T}}) where {T<:IndexType} = Partial(indices)
 partial(indices::IndexType...) = Partial(indices)
 
