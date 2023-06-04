@@ -28,6 +28,6 @@ then julia would not know whether to use
 =#
 for T in [SimpleKernel, Kernel] #subtypes(Kernel)
     (k::T)(x::DiffPt, y::DiffPt) = _evaluate(k, x, y)
-    (k::T)(x::DiffPt, y) = _evaluate(k, x,(y, Partial()))
-    (k::T)(x, y::DiffPt) = _evaluate(k, (x, Partial()), y)
+    (k::T)(x::DiffPt, y) = _evaluate(k, x,(y, partial()))
+    (k::T)(x, y::DiffPt) = _evaluate(k, (x, partial()), y)
 end

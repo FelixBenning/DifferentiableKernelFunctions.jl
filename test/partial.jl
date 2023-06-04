@@ -1,4 +1,5 @@
 @testset "Partial" begin
+    @test partial() isa DKF.Partial{0,Tuple{}}
     @test partial.(1:10) == DKF.gradient(10)
     @test partial.(productArray(1:10, 1:10)) == DKF.hessian(10)
     @test DKF.gradient(10) isa AbstractArray{DKF.Partial{1,Tuple{Int}},1}

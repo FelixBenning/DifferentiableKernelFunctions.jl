@@ -3,7 +3,7 @@ struct Partial{Order,T<:Tuple{Vararg{IndexType,Order}}}
     indices::T
 end
 
-Partial() = Partial{0,Tuple{}}(())
+Partial(::Tuple{}) = Partial{0,Tuple{}}(())
 function Partial(indices::Tuple{Vararg{T}}) where {T<:IndexType}
     Ord = length(indices)
     return Partial{Ord,NTuple{Ord,T}}(indices)
