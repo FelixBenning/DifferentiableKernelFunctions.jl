@@ -1,18 +1,15 @@
 const IndexType = Union{Int,Base.AbstractCartesianIndex}
-
-struct Partial{Order,T<:IndexType}
-    indices::NTuple{Order,T}
+struct Partial{Order,T<:Tuple{Vararg{IndexType,Order}}}
+    indices::T
 end
 
-# TODO: this is not ideal... how does NTuple{0,Int} <: Tuple{} work??
-Partial() = Partial{0,Int}(())
-function Partial(indices::Integer...)
-    return Partial{length(indices),Int}(indices)
+Partial(::Tuple{}) = Partial{0,Tuple{}}(())
+function Partial(indices::Tuple{Vararg{T}}) where {T<:IndexType}
+    Ord = length(indices)
+    return Partial{Ord,NTuple{Ord,T}}(indices)
 end
-function Partial(indices::Base.AbstractCartesianIndex...)
-    return Partial{length(indices),Base.AbstractCartesianIndex}(indices)
-end
-partial(indices...) = Partial(indices...)
+partial(indices::Tuple{Vararg{T}}) where {T<:IndexType} = Partial(indices)
+partial(indices::IndexType...) = Partial(indices)
 
 ## show helpers
 
@@ -22,18 +19,18 @@ lower_digits(idx::Base.AbstractCartesianIndex) = join(map(lower_digits, Tuple(id
 ### Fallbacks
 compact_representation(p::Partial) = compact_representation(MIME"text/plain"(), p)
 compact_representation(::MIME, p::Partial) = compact_representation(p)
-detailed_representation(p::Partial) = """: Partial($(join(p.indices,",")))"""
-detailed_representation(p::Partial{0}) = """: Partial() a zero order derivative"""
+detailed_representation(p::Partial) = """: partial($(join(p.indices,",")))"""
+detailed_representation(p::Partial{0,Tuple{}}) = """: partial() a zero order derivative"""
 
 ### text/plain
-compact_representation(::MIME"text/plain", ::Partial{0}) = "id"
+compact_representation(::MIME"text/plain", ::Partial{0,Tuple{}}) = "id"
 function compact_representation(::MIME"text/plain", p::Partial)
     lower_numbers = map(lower_digits, p.indices)
     return join(["∂$(x)" for x in lower_numbers])
 end
 
 ### text/html
-compact_representation(::MIME"text/html", ::Partial{0}) = """<span class="text-muted" title="a zero order derivative">id</span>"""
+compact_representation(::MIME"text/html", ::Partial{0,Tuple{}}) = """<span class="text-muted" title="a zero order derivative">id</span>"""
 function compact_representation(::MIME"text/html", p::Partial)
     return join(map(n -> "∂<sub>$(n)</sub>", Tuple(p.indices)), "")
 end
@@ -54,12 +51,22 @@ end
 
 const DiffPt{T} = Tuple{T,Partial}
 
-gradient(dim::Integer) = mappedarray(partial, Base.OneTo(dim))
-hessian(dim::Integer) = mappedarray(partial, productArray(Base.OneTo(dim), Base.OneTo(dim)))
-fullderivative(order::Integer,dim::Integer) = mappedarray(partial, productArray(ntuple(_->Base.OneTo(dim), order)...))
+function fullderivative(::Val{order}, input_indices::AbstractVector{Int}) where {order}
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())...))
+end
+fullderivative(::Val{order}, dim::Integer) where {order} = fullderivative(Val{order}(), Base.OneTo(dim))
+function fullderivative(::Val{order}, input_indices::AbstractArray{T,N}) where {order,N,T<:Base.AbstractCartesianIndex{N}}
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())...))
+end
+
+gradient(input_indices::AbstractArray) = fullderivative(Val(1), input_indices)
+gradient(dim::Integer) = fullderivative(Val(1), dim)
+
+hessian(input_indices::AbstractArray) = fullderivative(Val(2), input_indices)
+hessian(dim::Integer) = fullderivative(Val(2), dim)
 
 # idea: lazy mappings can be undone (extract original range -> towards a specialization speedup of broadcasting over multiple derivatives using backwardsdiff)
-const MappedPartialVec{T} = ReadonlyMappedArray{Partial{1,Int},1,T,typeof(partial)}
+const MappedPartialVec{T} = ReadonlyMappedArray{Partial{1,Tuple{Int}},1,T,typeof(partial)}
 function extract_range(p_map::MappedPartialVec{T}) where {T<:AbstractUnitRange{Int}}
     return p_map.data::T
 end

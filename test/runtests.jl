@@ -1,5 +1,6 @@
 using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel
-using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, DiffPt, partial, Partial
+using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, DiffPt, partial
+using ProductArrays: productArray
 using Test
 
 """
@@ -7,6 +8,7 @@ List of Testfiles without extension. `\$(test).jl"` should be a file for every t
 """
 const AVAILABLE_TESTS = [
     "diffKernel",
+    "partial"
 ]
 
 function test_selection()
