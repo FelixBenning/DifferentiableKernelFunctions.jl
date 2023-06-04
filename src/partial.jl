@@ -4,15 +4,16 @@ struct Partial{Order,T<:Tuple{Vararg{IndexType,Order}}}
 end
 
 Partial() = Partial{0,Tuple{}}(())
-function Partial(indices::Integer...)
-    N = length(indices)
-    return Partial{N,NTuple{N,Int}}(indices)
+function Partial(indices::Tuple{Vararg{T}}) where {T<:IndexType}
+    Ord = length(indices)
+    return Partial{Ord,NTuple{Ord,T}}(indices)
 end
-function Partial(indices::Base.AbstractCartesianIndex...)
-    N = length(indices)
-    return Partial{N,NTuple{N,Base.AbstractCartesianIndex}}(indices)
-end
-partial(indices...) = Partial(indices...)
+# function Partial(indices::Base.AbstractCartesianIndex...)
+#     N = length(indices)
+#     return Partial{N,NTuple{N,Base.AbstractCartesianIndex}}(indices)
+# end
+partial(indices::Tuple{Vararg{T}}) where {T<:IndexType} = Partial(indices)
+partial(indices::IndexType...) = Partial(indices)
 
 ## show helpers
 
@@ -55,11 +56,11 @@ end
 const DiffPt{T} = Tuple{T,Partial}
 
 function fullderivative(::Val{order}, input_indices::AbstractVector{Int}) where {order}
-    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())))
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())...))
 end
-fullderivative(::Val{order}, dim::Integer) where {order} = fullderivative(Val{order}(), Base.OnTo(dim))
+fullderivative(::Val{order}, dim::Integer) where {order} = fullderivative(Val{order}(), Base.OneTo(dim))
 function fullderivative(::Val{order}, input_indices::AbstractArray{T,N}) where {order,N,T<:Base.AbstractCartesianIndex{N}}
-    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())))
+    return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())...))
 end
 
 gradient(input_indices::AbstractArray) = fullderivative(Val(1), input_indices)
