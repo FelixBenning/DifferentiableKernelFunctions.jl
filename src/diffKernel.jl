@@ -30,9 +30,6 @@ This forces the use of less specialized methods. So you have to activate it with
 Example:
 
 ```jldoctest
-julia> k = EnableDiffWrap(SEKernel())
-EnableDiffWrap{SqExponentialKernel{Distances.Euclidean}}(Squared Exponential Kernel (metric = Distances.Euclidean(0.0)))
-
 julia> k = EnableDiffWrap(SEKernel());
 
 julia> k((0, partial(1)), 0) # calculate Cov(∂₁Z(0), Z(0))
