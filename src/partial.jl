@@ -105,6 +105,6 @@ i.e. 2*dim dimensional input
 function apply_partial(
     k, partials_x::Tuple{Vararg{T}}, partials_y::Tuple{Vararg{T}}
 ) where {T<:IndexType}
-    local f(x, y) = apply_partial(t -> k(t, y), partials_x...)(x)
+    f(x, y) = apply_partial(t -> k(t, y), partials_x...)(x)
     return (x, y) -> apply_partial(t -> f(x, t), partials_y...)(y)
 end
