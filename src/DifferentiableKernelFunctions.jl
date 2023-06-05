@@ -4,7 +4,7 @@ using Reexport
 
 @reexport using KernelFunctions
 
-export partial, EnableDiffWrap
+export partial, EnableDiff
 
 include("multiOutput.jl")
 include("partial.jl")

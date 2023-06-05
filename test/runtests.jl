@@ -1,5 +1,5 @@
 using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel
-using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, EnableDiffWrap, partial
+using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, EnableDiff, partial
 using ProductArrays: productArray
 using Test
 
