@@ -1,4 +1,4 @@
-using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel
+using KernelFunctions: KernelFunctions as KF, MaternKernel, SEKernel, RationalQuadraticKernel
 using DifferentiableKernelFunctions: DifferentiableKernelFunctions as DKF, EnableDiff, partial
 using ProductArrays: productArray
 using Test
