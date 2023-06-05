@@ -15,8 +15,11 @@
     ]
         k = EnableDiff(k1)
         for x in [0, 1, -1, 42]
-            # correlation with self should be positive
-            @test k((x, partial(1)), (x, partial(1))) > 0 skip = true
+            # correlation with self should be positive 
+            ## This fails for Matern and RationalQuadraticKernel
+            # because its implementation branches on x == y resulting in a zero derivative
+            # (cf. https://github.com/JuliaGaussianProcesses/KernelFunctions.jl/issues/517)
+            @test k((x, partial(1)), (x, partial(1))) > 0
 
             # the slope should be positively correlated with a point further down
             @test k(
