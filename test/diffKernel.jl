@@ -1,13 +1,13 @@
 @testset "diffKernel" begin
     @testset "smoke test" begin
-        k = MaternKernel()
+        k = EnableDiffWrap(MaternKernel())
         k(1, 1)
         k(1, (1, partial(1, 1))) # Cov(Z(x), ∂₁∂₁Z(y)) where x=1, y=1
         k(([1], partial(1)), [2]) # Cov(∂₁Z(x), Z(y)) where x=[1], y=[2]
         k(([1, 2], partial(1)), ([1, 2], partial(2)))# Cov(∂₁Z(x), ∂₂Z(y)) where x=[1,2], y=[1,2]
     end
 
-    @testset "Sanity Checks with $k" for k in [SEKernel()]
+    @testset "Sanity Checks with $k" for k in EnableDiffWrap.([SEKernel()])
         for x in [0, 1, -1, 42]
             # for stationary kernels Cov(∂Z(x) , Z(x)) = 0
             @test k((x, partial(1)), x) ≈ 0
