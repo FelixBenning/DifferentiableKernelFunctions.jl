@@ -64,7 +64,7 @@ gradient(dim::Integer) = fullderivative(Val(1), dim)
 hessian(input_indices::AbstractArray) = fullderivative(Val(2), input_indices)
 hessian(dim::Integer) = fullderivative(Val(2), dim)
 
-diffAt(::Val{order}, x) where {order} = productArray(Ref(x), _diffAt(Base.IteratorSize(x), Val(order), x))
+diffAt(::Val{order}, x) where {order} = productArray(_diffAt(Base.IteratorSize(x), Val(order), x), (x,))
 _diffAt(::Base.HasLength, ::Val{order}, x) where {order} = fullderivative(Val(order), Base.OneTo(length(x)))
 _diffAt(::Base.HasShape{1}, ::Val{order}, x) where {order} = fullderivative(Val(order), Base.OneTo(length(x)))
 _diffAt(::Base.HasShape, ::Val{order}, x) where {order} = fullderivative(Val(order), CartesianIndices(axes(x)))
