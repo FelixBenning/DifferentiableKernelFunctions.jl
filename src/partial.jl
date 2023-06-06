@@ -49,7 +49,6 @@ for T in [MIME"text/plain", MIME"text/html"]
     end
 end
 
-const DiffPt{T} = Tuple{T,Partial}
 
 function fullderivative(::Val{order}, input_indices::AbstractVector{Int}) where {order}
     return mappedarray(partial, productArray(ntuple(_ -> input_indices, Val{order}())...))
@@ -64,6 +63,15 @@ gradient(dim::Integer) = fullderivative(Val(1), dim)
 
 hessian(input_indices::AbstractArray) = fullderivative(Val(2), input_indices)
 hessian(dim::Integer) = fullderivative(Val(2), dim)
+
+diffAt(::Val{order}, x) where {order} = productArray(Ref(x), _diffAt(Base.IteratorSize(x), Val(order), x))
+_diffAt(::Base.HasLength, ::Val{order}, x) where {order} = fullderivative(Val(order), Base.OneTo(length(x)))
+_diffAt(::Base.HasShape{1}, ::Val{order}, x) where {order} = fullderivative(Val(order), Base.OneTo(length(x)))
+_diffAt(::Base.HasShape, ::Val{order}, x) where {order} = fullderivative(Val(order), CartesianIndices(axes(x)))
+
+gradAt(x) = diffAt(Val(1), x)
+grad(f) = x -> f.(gradAt(x)) # for f = rand(::GP),  grad(f)(x) should work.
+
 
 # idea: lazy mappings can be undone (extract original range -> towards a specialization speedup of broadcasting over multiple derivatives using backwardsdiff)
 const MappedPartialVec{T} = ReadonlyMappedArray{Partial{1,Tuple{Int}},1,T,typeof(partial)}
