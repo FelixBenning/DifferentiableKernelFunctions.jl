@@ -11,6 +11,8 @@
         SEKernel(),
         MaternKernel(ν=5),
         RationalQuadraticKernel(),
+        Matern32Kernel(),
+        Matern52Kernel(),
         SEKernel() + RationalQuadraticKernel()
     ]
         k = EnableDiff(k1)
